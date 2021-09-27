@@ -1,5 +1,5 @@
 # Nextcloud Pomodoro
-A simple pomodoro app connecting to NextCloud deck api to download the list of tasks. It provides also some weekly stats to keep track of daily targets. To run it requires the [Racket Programming Language] (https://racket-lang.org)
+A simple pomodoro app connecting to NextCloud deck api to download the list of tasks. It provides also some weekly stats to keep track of daily targets. To run it requires the [Racket Programming Language](https://racket-lang.org)
 
 ## Why another pomodoro app?
 I was looking for a pomodoro app to work on tasks saved in my [Nexcloud Deck](https://apps.nextcloud.com/apps/deck) . I didn't find it so I coded it in few lines of Racket.
