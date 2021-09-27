@@ -3,7 +3,14 @@
 (require framework/preferences
          "defaults.rkt")
 
-(provide show-settings)
+(provide show-settings
+         nc-settings-saved?)
+
+(define (nc-settings-saved?)
+  (and
+   (not (equal? (hash-ref defaults 'server) (preferences:get 'server)))
+   (not (equal? (hash-ref defaults 'user) (preferences:get 'user)))
+   (not (equal? (hash-ref defaults 'pass) (preferences:get 'pass)))))
 
 (define (show-settings cb)
   (define settings-frame (new frame% [label "Settings"]

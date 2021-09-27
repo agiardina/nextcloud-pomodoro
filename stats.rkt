@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/gui
 
 (require plot
          "database.rkt")
@@ -52,7 +52,8 @@
 (define (plot-weekly-stats)
   (let* ([stats (weekly-stats)]
          [boards (stats->boards stats)])
-    (plot (map (lambda (board n)
+    (if (not (empty? boards)) 
+        (plot (map (lambda (board n)
                  (discrete-histogram
                   (weekly-board-stats stats board)
                   #:skip 5
@@ -63,4 +64,9 @@
                boards  (sequence->list (range 1 (+ 1 (length boards)))))
           #:x-label "Day" #:y-label "Number of daily pomodoro"
           #:title "Weekly Stats"
-          #:width 800)))
+          #:y-max 20
+          #:width 800)
+        (message-box "Weekly Stats"
+                     "There are no saved sessions yet"
+                     #f
+                     '(ok no-icon)))))

@@ -1,6 +1,13 @@
 #lang racket 
-(require framework/preferences)
 
-(preferences:set-default 'server "https://cloud.example.com" string?)
-(preferences:set-default 'user "" string?)
-(preferences:set-default 'pass "" string?)
+(require framework/preferences)
+(provide defaults)
+
+(define defaults
+  (hash
+   'server "https://cloud.example.com"
+   'user ""
+   'pass ""))
+
+(for ([(key value) (in-hash defaults)])
+  (preferences:set-default key value string?))

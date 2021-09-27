@@ -25,12 +25,12 @@
 
 (define max-choice-len 40)
 (define interval (* 60 25))
-;(define interval (* 6 1))
+;(define interval 2)
 (define count interval)
 (define running? #f)
 
 ; Make a frame by instantiating the frame% class
-(define frame (new frame% [label "My Pomodoro"]
+(define frame (new frame% [label "Nextcloud Pomodoro"]
                    [stretchable-width #f]))
 
 (define h-panel (new horizontal-panel% [parent frame]))
@@ -77,13 +77,14 @@
                  [font (make-object font% 40 'default)]))
 
 (define (populate-boards-choice)
-  (send boards-choice clear)
-  (send stacks-choice clear)
-  (send cards-choice clear)  
-  (send boards-choice append "Select Board")
-  (map
-   (lambda (item) (send boards-choice append (str-max (cdr item) max-choice-len)))
-   (load-boards-using-prefs)))
+  (when (nc-settings-saved?)
+    (send boards-choice clear)
+    (send stacks-choice clear)
+    (send cards-choice clear)  
+    (send boards-choice append "Select Board")
+    (map
+     (lambda (item) (send boards-choice append (str-max (cdr item) max-choice-len)))
+     (load-boards-using-prefs))))
 
 (define (populate-stacks-choice boards-selected-index)
   (send stacks-choice clear)
@@ -165,8 +166,9 @@
 (define weekly-stats-menu (new menu-item%
                           (label "Weekly Stats")
                           (parent stats-menu)
-                          [callback (lambda (_ __)
-                                      (plot-weekly-stats))]))
+                          [callback
+                           (lambda (_ __)
+                             (plot-weekly-stats))]))
 
 (populate-boards-choice)
 (send frame show #t)

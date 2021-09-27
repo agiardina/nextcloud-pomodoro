@@ -20,9 +20,13 @@
           (string-append user ":" pass))))))
 
 (define (get-deck-remote server user pass api)
-  (get-pure-port
-   (string->url (string-append server "/index.php/apps/deck/api/v1.0" api)) 
-   (list (make-auth-header user pass) "OCS-APIRequest: true")))
+  (with-handlers ([exn:fail? (lambda (exn)
+                               (displayln (exn-message exn))
+                               '())])
+    (read-json
+     (get-pure-port
+      (string->url (string-append server "/index.php/apps/deck/api/v1.0" api)) 
+      (list (make-auth-header user pass) "OCS-APIRequest: true")))))
 
 (define (get-boards server user pass)
   (get-deck-remote server user pass "/boards"))
@@ -34,13 +38,13 @@
   (current-boards (map (lambda (item)
        (cons (hash-ref item 'id)
              (hash-ref item 'title)))
-                       (read-json (get-boards server user pass))))
+                       (get-boards server user pass)))
   (current-boards))
 
 (define (load-stacks server user pass board-id)
   (current-stacks (filter
                    (lambda (item) (hash-has-key? item 'cards))
-                   (read-json (get-stacks server user pass board-id))))
+                   (get-stacks server user pass board-id)))
   (current-stacks))
 
 (define (load-boards-using-prefs)
