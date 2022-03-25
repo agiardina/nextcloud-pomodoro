@@ -25,12 +25,21 @@
 
 (define max-choice-len 40)
 (define interval (* 60 25))
-;(define interval 2)
 (define count interval)
 (define running? #f)
 
+(define (timer-active-tick)
+  (when (not running?)
+    (send not-running-window show #t)
+    (send not-running-window fullscreen #t)))
+
+(define timer-check-active (new timer% [notify-callback timer-active-tick]))
+
 ; Make a frame by instantiating the frame% class
-(define frame (new frame% [label "Nextcloud Pomodoro"]
+(define frame (new (class frame% (super-new)
+                     (define/augment (on-close)
+                       (send timer-check-active stop)))
+                   [label "Nextcloud Pomodoro"]
                    [stretchable-width #f]))
 
 (define h-panel (new horizontal-panel% [parent frame]))
@@ -115,6 +124,26 @@
   (send timer-btn set-label "START")
   (send timer stop))
 
+(define not-running-window (new frame%
+                                [label "Alert!"]
+                                [width 1024]
+                                [height 768]
+                                [style '(no-caption)]))
+
+(define not-running-panel (new vertical-panel% [parent not-running-window]))
+
+(define not-running-message (new message%
+                                 [parent not-running-panel]
+                                 [font (make-font #:size 24)]
+                                 [label "Start a pomodoro!"]))
+
+(define not-running-close (new button%
+                               [parent not-running-panel]
+                               [label "Close"]
+                               [callback (lambda (e b)
+                                           (send not-running-window show #f))]))
+                             
+
 (define (timer-tick)
   (set! count (- count 1))
   (send msg set-label (seconds->str count))
@@ -143,6 +172,8 @@
 
 (define timer (new timer% [notify-callback timer-tick]))
 
+(send timer-check-active start 60000) ;1 minute
+
 (define timer-btn (new button% [parent frame]
                        [label "START"]
                        [callback (lambda (_ __) (if running? (timer-stop) (timer-start)))])) 
@@ -169,6 +200,7 @@
                           [callback
                            (lambda (_ __)
                              (plot-weekly-stats))]))
+
 
 (populate-boards-choice)
 (send frame show #t)
