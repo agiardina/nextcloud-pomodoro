@@ -14,6 +14,11 @@
                  </d:prop>
                </d:propfind>")
 
+(define calendar-home-set-data "<d:propfind xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\">                                                           <d:prop>    
+                   <c:calendar-home-set />                                        
+                 </d:prop>
+               </d:propfind>") 
+
 (define (make-auth-header user pass)
   (string-trim (string-append
        "Authorization: Basic "
@@ -23,7 +28,6 @@
           (string-append user ":" pass)))))))
 (module+ test
   (check-equal? (make-auth-header "demo" "p@55w0rd") "Authorization: Basic ZGVtbzpwQDU1dzByZA=="))
-
 
 (define (get-path full-url)
   (let* ([parts (url-path (string->url full-url))]
@@ -57,6 +61,13 @@
 </d:multistatus>\n"])
     (check-equal? (xml->current-user-href s) "/remote.php/dav/principals/users/myuser/")))
 
+(define (xml->user-calendar-home-href s)
+  (se-path* '(cal:calendar-home-set d:href)
+            (string->xexpr s)))
+(module+ test
+  (let ([s "<?xml version=\"1.0\"?>\n<d:multistatus xmlns:d=\"DAV:\" xmlns:s=\"http://sabredav.org/ns\" xmlns:cal=\"urn:ietf:params:xml:ns:caldav\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\" xmlns:oc=\"http://owncloud.org/ns\" xmlns:nc=\"http://nextcloud.org/ns\"><d:response><d:href>/remote.php/dav/principals/users/myuser/</d:href><d:propstat><d:prop><cal:calendar-home-set><d:href>/remote.php/dav/calendars/myuser/</d:href></cal:calendar-home-set></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>\n"])
+    (check-equal? (xml->user-calendar-home-href s) "/remote.php/dav/calendars/myuser/")))
+
 (define (absolute-url calling-url href)
   (let ([cu (string->url calling-url)]
         [hrefu (string->url href)])
@@ -84,4 +95,7 @@
       (port->string content))))
 
 (define (current-user-principal! url username password)
-  (xml->current-user-href (call-caldav! url username password "PROPFIND" 0 user-principal-data)))
+  (absolute-url url (xml->current-user-href (call-caldav! url username password "PROPFIND" 0 user-principal-data))))
+
+(define (calendar-home-set! url username password)
+  (absolute-url url (xml->user-calendar-home-href (call-caldav! url username password "PROPFIND" 0 calendar-home-set-data))))
