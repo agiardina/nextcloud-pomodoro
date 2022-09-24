@@ -57,6 +57,18 @@
 </d:multistatus>\n"])
     (check-equal? (xml->current-user-href s) "/remote.php/dav/principals/users/myuser/")))
 
+(define (absolute-url calling-url href)
+  (let ([cu (string->url calling-url)]
+        [hrefu (string->url href)])
+    (if (url-scheme hrefu)
+        href ;is already an absolute url
+        (url->string (struct-copy url cu [path (url-path hrefu)])))))
+(module+ test
+  (check-equal? (absolute-url "http://www.myoldsite.com/d/e/f/" "https://www.mysite.com/a/b/c/")
+                "https://www.mysite.com/a/b/c/")
+  (check-equal? (absolute-url "http://www.mysite.com/a/b/c/" "/d/e/f/")
+                "http://www.mysite.com/d/e/f/"))
+
 (define (call-caldav! url username password method depth data)
   (let ([conf (http-config url username password)])
     (let-values ([(status header content)
