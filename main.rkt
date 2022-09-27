@@ -40,11 +40,11 @@
                      (define/augment (on-close)
                        (send timer-check-active stop)))
                    [label "Nextcloud Pomodoro"]
-                   [stretchable-width #f]))
+                   [stretchable-width #t]))
 
 (define h-panel (new horizontal-panel% [parent frame]))
-(define left-panel (new group-box-panel%
-                        [label "Task"]
+(define left-panel (new vertical-panel%
+;                        [label "Task"]
                         [min-width 350]
                         [spacing 2]
                         [border 15]
@@ -54,6 +54,7 @@
                         [parent h-panel]
                         ))
 (define right-panel (new panel% [parent h-panel]
+                         [stretchable-width #f]
                          [min-width 230]))
 (define boards-choice (new choice% [label #f]
                     [choices '("Check Nextcloud Settings")]
@@ -65,7 +66,7 @@
                                 (populate-stacks-choice (send c get-selection)))]))
 
 (define stacks-choice (new choice% [label #f]
-                    [choices '()]
+                    [choices '("")]
                     [min-width 150]
                     [stretchable-width #t]
    	 	    [parent left-panel]
@@ -74,7 +75,7 @@
                                 (populate-cards-choice (send c get-selection)))]))
 
 (define cards-choice (new choice% [label #f]
-                   [choices '()]
+                   [choices '("")]
                    [min-width 150]
                    [stretchable-width #t]
                    [style '(vertical-label)]
