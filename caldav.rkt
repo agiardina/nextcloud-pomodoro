@@ -17,7 +17,15 @@
 (define calendar-home-set-data "<d:propfind xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\">                                                           <d:prop>    
                    <c:calendar-home-set />                                        
                  </d:prop>
-               </d:propfind>") 
+               </d:propfind>")
+
+(define calendars-data "<d:propfind xmlns:d=\"DAV:\"  xmlns:cal=\"urn:ietf:params:xml:ns:caldav\">
+                 <d:prop>
+                   <d:displayname/>
+                   <d:current-user-privilege-set/>
+                   <cal:supported-calendar-component-set/>
+                 </d:prop>
+               </d:propfind>")
 
 (define (make-auth-header user pass)
   (string-trim (string-append
@@ -99,3 +107,48 @@
 
 (define (calendar-home-set! url username password)
   (absolute-url url (xml->user-calendar-home-href (call-caldav! url username password "PROPFIND" 0 calendar-home-set-data))))
+
+(define (writable? r)
+  (if (member '(d:write ()) (se-path*/list '(d:privilege) r))
+      #t
+      #f))
+
+(define (todos? r)
+  (if (member '(cal:comp ((name "VTODO")))
+              (se-path*/list '(cal:supported-calendar-component-set) r))
+      #t
+      #f))
+
+(define (events? r)
+  (if (member '(cal:comp ((name "VEVENT")))
+              (se-path*/list '(cal:supported-calendar-component-set) r))
+      #t
+      #f))
+
+(define (response->calendar r)
+  (hash "url" (se-path* '(d:href) r)
+        "name" (se-path* '(d:displayname) r)
+        "writable?" (writable? r)
+        "todos?" (todos? r)
+        "events?" (events? r)))
+
+(define (xml->calendars s)
+  (let* ([res (se-path*/list '(d:multistatus) (string->xexpr s))]
+         [all-calendars (map response->calendar res)])
+    (filter (lambda (c) (if (hash-ref c "name")
+                            #t
+                            #f))
+            all-calendars)))
+(module+ test
+  (let* ([s "<?xml version=\"1.0\"?>\n<d:multistatus xmlns:d=\"DAV:\" xmlns:s=\"http://sabredav.org/ns\" xmlns:cal=\"urn:ietf:params:xml:ns:caldav\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:oc=\"http://owncloud.org/ns\" xmlns:nc=\"http://nextcloud.org/ns\"><d:response><d:href>/remote.php/dav/calendars/demo/</d:href><d:propstat><d:prop><d:current-user-privilege-set><d:privilege><d:write/></d:privilege><d:privilege><d:write-properties/></d:privilege><d:privilege><d:write-content/></d:privilege><d:privilege><d:unlock/></d:privilege><d:privilege><d:bind/></d:privilege><d:privilege><d:unbind/></d:privilege><d:privilege><d:write-acl/></d:privilege><d:privilege><d:read/></d:privilege><d:privilege><d:read-acl/></d:privilege><d:privilege><d:read-current-user-privilege-set/></d:privilege></d:current-user-privilege-set></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat><d:propstat><d:prop><d:displayname/><cal:supported-calendar-component-set/></d:prop><d:status>HTTP/1.1 404 Not Found</d:status></d:propstat></d:response><d:response><d:href>/remote.php/dav/calendars/demo/personal/</d:href><d:propstat><d:prop><d:displayname>Personal</d:displayname><d:current-user-privilege-set><d:privilege><d:write/></d:privilege><d:privilege><d:write-properties/></d:privilege><d:privilege><d:write-content/></d:privilege><d:privilege><d:unlock/></d:privilege><d:privilege><d:bind/></d:privilege><d:privilege><d:unbind/></d:privilege><d:privilege><d:write-acl/></d:privilege><d:privilege><d:read/></d:privilege><d:privilege><d:read-acl/></d:privilege><d:privilege><d:read-current-user-privilege-set/></d:privilege><d:privilege><cal:read-free-busy/></d:privilege></d:current-user-privilege-set><cal:supported-calendar-component-set><cal:comp name=\"VEVENT\"/></cal:supported-calendar-component-set></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response><d:response><d:href>/remote.php/dav/calendars/demo/todo/</d:href><d:propstat><d:prop><d:displayname>Todo</d:displayname><d:current-user-privilege-set><d:privilege><d:write/></d:privilege><d:privilege><d:write-properties/></d:privilege><d:privilege><d:write-content/></d:privilege><d:privilege><d:unlock/></d:privilege><d:privilege><d:bind/></d:privilege><d:privilege><d:unbind/></d:privilege><d:privilege><d:write-acl/></d:privilege><d:privilege><d:read/></d:privilege><d:privilege><d:read-acl/></d:privilege><d:privilege><d:read-current-user-privilege-set/></d:privilege><d:privilege><cal:read-free-busy/></d:privilege></d:current-user-privilege-set><cal:supported-calendar-component-set><cal:comp name=\"VTODO\"/></cal:supported-calendar-component-set></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response><d:response><d:href>/remote.php/dav/calendars/demo/inbox/</d:href><d:propstat><d:prop><d:current-user-privilege-set><d:privilege><cal:schedule-deliver/></d:privilege><d:privilege><cal:schedule-deliver-invite/></d:privilege><d:privilege><cal:schedule-deliver-reply/></d:privilege><d:privilege><cal:schedule-query-freebusy/></d:privilege><d:privilege><d:unbind/></d:privilege><d:privilege><d:write-properties/></d:privilege><d:privilege><d:read/></d:privilege><d:privilege><d:read-acl/></d:privilege><d:privilege><d:read-current-user-privilege-set/></d:privilege></d:current-user-privilege-set></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat><d:propstat><d:prop><d:displayname/><cal:supported-calendar-component-set/></d:prop><d:status>HTTP/1.1 404 Not Found</d:status></d:propstat></d:response><d:response><d:href>/remote.php/dav/calendars/demo/outbox/</d:href><d:propstat><d:prop><d:current-user-privilege-set><d:privilege><cal:schedule-send/></d:privilege><d:privilege><cal:schedule-send-invite/></d:privilege><d:privilege><cal:schedule-send-reply/></d:privilege><d:privilege><cal:schedule-send-freebusy/></d:privilege><d:privilege><cal:schedule-post-vevent/></d:privilege><d:privilege><d:read/></d:privilege><d:privilege><d:read-acl/></d:privilege><d:privilege><d:read-current-user-privilege-set/></d:privilege></d:current-user-privilege-set></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat><d:propstat><d:prop><d:displayname/><cal:supported-calendar-component-set/></d:prop><d:status>HTTP/1.1 404 Not Found</d:status></d:propstat></d:response><d:response><d:href>/remote.php/dav/calendars/demo/trashbin/</d:href><d:propstat><d:prop><d:current-user-privilege-set><d:privilege><d:all/></d:privilege><d:privilege><d:read/></d:privilege><d:privilege><d:write/></d:privilege><d:privilege><d:write-properties/></d:privilege><d:privilege><d:write-content/></d:privilege><d:privilege><d:unlock/></d:privilege><d:privilege><d:bind/></d:privilege><d:privilege><d:unbind/></d:privilege><d:privilege><d:write-acl/></d:privilege><d:privilege><d:read-acl/></d:privilege><d:privilege><d:read-current-user-privilege-set/></d:privilege></d:current-user-privilege-set></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat><d:propstat><d:prop><d:displayname/><cal:supported-calendar-component-set/></d:prop><d:status>HTTP/1.1 404 Not Found</d:status></d:propstat></d:response><d:response><d:href>/remote.php/dav/calendars/demo/app-generated--deck--board-7/</d:href><d:propstat><d:prop><d:displayname>Deck: Personal</d:displayname><d:current-user-privilege-set><d:privilege><d:write-properties/></d:privilege><d:privilege><d:read/></d:privilege><d:privilege><d:read-acl/></d:privilege><d:privilege><d:read-current-user-privilege-set/></d:privilege><d:privilege><cal:read-free-busy/></d:privilege></d:current-user-privilege-set><cal:supported-calendar-component-set><cal:comp name=\"VTODO\"/></cal:supported-calendar-component-set></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>\n"]
+         [calendars (xml->calendars s)])
+    (check-equal? (length calendars) 2)))
+
+(define (filter-todo-calendars l)
+  (filter (lambda (c) (hash-ref c "todos?")) l))
+(module+ test
+  (let ([calendars (list (hash "todos?" #t) (hash "todos?" #f) (hash "todos?" #t))])
+    (check-equal? (length (filter-todo-calendars calendars)) 2)))
+
+(define (calendars! url username password)
+  (xml->calendars (call-caldav! url username password "PROPFIND" 1 calendars-data)))
