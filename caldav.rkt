@@ -27,6 +27,18 @@
                  </d:prop>
                </d:propfind>")
 
+(define todos-data "<c:calendar-query xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\">
+    <d:prop>
+        <d:getetag />
+        <c:calendar-data />
+    </d:prop>
+    <c:filter>
+        <c:comp-filter name=\"VCALENDAR\">
+            <c:comp-filter name=\"VTODO\" />
+        </c:comp-filter>
+    </c:filter>
+</c:calendar-query>")
+
 (define (make-auth-header user pass)
   (string-trim (string-append
        "Authorization: Basic "
@@ -183,4 +195,7 @@
     (check-equal? (length (filter-todo-calendars calendars)) 2)))
 
 (define (calendars! url username password)
-  (xml->calendars (call-caldav! url username password "PROPFIND" 1 calendars-data)))
+  (xml->calendars (call-caldav! url username password "PROPFIND" 1 calendars-data) url))
+
+(define (todo-calendars! url username password)
+  (filter-todo-calendars (calendars! url username password)))
