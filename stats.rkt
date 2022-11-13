@@ -60,7 +60,7 @@
                   #:color n
                   #:line-color n
                   #:x-min n
-                  #:label board))
+                  #:label (~a board "=" (apply + (map second (weekly-board-stats stats board))))))
                boards  (sequence->list (range 1 (+ 1 (length boards)))))
           #:x-label "Day" #:y-label "Number of daily pomodoro"
           #:title "Weekly Stats"
