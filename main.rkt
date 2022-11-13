@@ -23,7 +23,7 @@
       (string-append (substring str 0 (- max 3)) "...")
       str))
 
-(define max-choice-len 40)
+(define max-choice-len 100)
 (define interval (* 60 25))
 (define count interval)
 (define running? #f)
@@ -40,6 +40,7 @@
                      (define/augment (on-close)
                        (send timer-check-active stop)))
                    [label "Nextcloud Pomodoro"]
+                   [width 1200]                   
                    [stretchable-width #t]))
 
 (define h-panel (new horizontal-panel% [parent frame]))
