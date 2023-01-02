@@ -25,5 +25,5 @@ timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"))
 (define (weekly-stats)
   (query-rows conn "SELECT board,strftime('%w',timestamp) as day,count(*)
 FROM logs 
-WHERE timestamp >= DATE('now', 'weekday 1', '-7 days') 
+WHERE timestamp >= IIF(DATE('now')==DATE('now','weekday 1'),DATE('now'),DATE('now', 'weekday 1', '-7 days'))
 GROUP BY board,day"))
