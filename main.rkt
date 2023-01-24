@@ -203,6 +203,13 @@
                            (lambda (_ __)
                              (plot-weekly-stats))]))
 
+(define yearl-ystats-menu (new menu-item%
+                          (label "Yearly Stats")
+                          (parent stats-menu)
+                          [callback
+                           (lambda (_ __)
+                             (plot-yearly-stats))]))
+
 
 (populate-boards-choice)
 (send frame show #t)

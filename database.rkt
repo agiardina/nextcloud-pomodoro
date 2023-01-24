@@ -2,7 +2,8 @@
 
 (require db)
 (provide add-to-logs
-         weekly-stats)
+         weekly-stats
+         yearly-stats)
 
 (define conn (sqlite3-connect
               #:database "ncpomodoro.db"
@@ -25,5 +26,12 @@ timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"))
 (define (weekly-stats)
   (query-rows conn "SELECT board,strftime('%w',timestamp) as day,count(*)
 FROM logs 
-WHERE timestamp >= IIF(DATE('now')==DATE('now','weekday 1'),DATE('now'),DATE('now', 'weekday 1', '-7 days'))
-GROUP BY board,day"))
+WHERE timestamp >= DATE('now', 'start of day', '-6 days')
+GROUP BY board,day order by timestamp"))
+
+(define (yearly-stats)
+  (query-rows conn "SELECT board, strftime('%Y-%W',timestamp) AS week, count(*) 
+FROM logs 
+WHERE timestamp > DATE('now','-1 year') 
+GROUP BY board, week
+ORDER BY week"))
