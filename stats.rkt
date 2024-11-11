@@ -113,7 +113,7 @@
                boards  (sequence->list (range 1 (+ 1 (length boards)))))
           #:x-label "Week" #:y-label "Pomodoros for week"
           #:title "Yearly Stats"
-          #:y-max 50
+          #:y-max 80
           #:width 800)
         (message-box "Yearly Stats"
                      "There are no saved sessions yet"

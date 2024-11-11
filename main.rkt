@@ -51,10 +51,10 @@
                         [border 15]
                         [horiz-margin 15]
                         [vert-margin 15]
-                        [alignment '(left top)]
+                        [alignment '(center top)]
                         [parent h-panel]
                         ))
-(define right-panel (new panel% [parent h-panel]
+(define right-panel (new vertical-panel% [parent h-panel]
                          [stretchable-width #f]
                          [min-width 230]))
 (define boards-choice (new choice% [label #f]
@@ -176,9 +176,16 @@
 
 (send timer-check-active start 60000) ;1 minute
 
-(define timer-btn (new button% [parent frame]
+ 
+(define insert-btn (new button% [parent left-panel]
+                       [label "Insert now"]
+                       [callback (lambda (_ __) (save-pomodoro))])) 
+
+(define timer-btn (new button% [parent right-panel]
                        [label "START"]
-                       [callback (lambda (_ __) (if running? (timer-stop) (timer-start)))])) 
+                       [min-width 120]
+                       [min-height 40]                       
+                       [callback (lambda (_ __) (if running? (timer-stop) (timer-start)))]))
 
 (define menu-bar (new menu-bar%
                       (parent frame)))
