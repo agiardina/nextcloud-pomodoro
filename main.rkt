@@ -30,8 +30,10 @@
 
 (define (timer-active-tick)
   (when (not running?)
+    (center-window not-running-window)
     (send not-running-window show #t)
-    (send not-running-window fullscreen #t)))
+    ;(send not-running-window fullscreen #t)
+    (send not-running-window focus)))
 
 (define timer-check-active (new timer% [notify-callback timer-active-tick]))
 
@@ -130,7 +132,15 @@
                                 [label "Alert!"]
                                 [width 1024]
                                 [height 768]
-                                [style '(no-caption)]))
+                                [style '(float no-caption)]))
+
+(define (center-window window)
+  (define-values (screen-width screen-height) (get-display-size))
+  (define frame-width (send window get-width))
+  (define frame-height (send window get-height))
+  (define x (/ (- screen-width frame-width) 2))
+  (define y (/ (- screen-height frame-height) 2))
+  (send window move x y))                            
 
 (define not-running-panel (new vertical-panel% [parent not-running-window]))
 
@@ -145,7 +155,6 @@
                                [callback (lambda (e b)
                                            (send not-running-window show #f))]))
                              
-
 (define (timer-tick)
   (set! count (- count 1))
   (send msg set-label (seconds->str count))
