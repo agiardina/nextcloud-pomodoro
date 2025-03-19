@@ -59,7 +59,8 @@
    (rotate '(1 2 3 4) 2) '(3 4 1 2)))
 
 (define (weekly-board-stats! stats board)
-  (rotate (weekly-board-stats stats board) (date-week-day (current-date))))
+  ; (rotate (weekly-board-stats stats board) (date-week-day (current-date)))
+  (weekly-board-stats stats board))
 
 (define (yearly-board-stats stats board)
   (map (lambda (y)
