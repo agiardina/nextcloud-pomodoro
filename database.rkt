@@ -27,7 +27,7 @@ timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"))
   (query-rows conn "SELECT board,strftime('%w',timestamp) as day,count(*)
 FROM logs 
 WHERE date(timestamp) >= date('now', 'weekday 0', '-7 days')
-  AND date(timestamp) < date('now', 'weekday 0', '+0 days')
+  AND date(timestamp) <= date('now', 'weekday 0', '+0 days')
 GROUP BY board,day order by timestamp"))
 
 (define (yearly-stats)
