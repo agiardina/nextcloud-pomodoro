@@ -30,7 +30,11 @@
 (define todos-data "<c:calendar-query xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\">
     <d:prop>
         <d:getetag />
-        <c:calendar-data />
+        <c:calendar-data>
+          <c:comp name=\"VTODO\">
+            <c:prop name=\"SUMMARY\"/>
+          </c:comp>
+        </c:calendar-data>
     </d:prop>
     <c:filter>
         <c:comp-filter name=\"VCALENDAR\">
@@ -199,3 +203,23 @@
 
 (define (todo-calendars! url username password)
   (filter-todo-calendars (calendars! url username password)))
+
+(define (todo->summary todo)
+  (let ([summary-lines 
+          (filter (lambda (x) 
+              (equal? (car x) "SUMMARY")) 
+              (map (lambda (x) (regexp-split ":" x)) 
+                  (regexp-split "\n" todo)))])
+    (if (pair? summary-lines) 
+        (string-join (cdar summary-lines) ":") 
+        "")))
+
+(define (todos->summaries todos)
+  (filter 
+    (lambda (x) (positive? (string-length x))) 
+    (map todo->summary todos)))
+
+(define (todos! url username password)
+ (todos->summaries (se-path*/list 
+      '(cal:calendar-data) 
+      (string->xexpr (call-caldav! url username password "REPORT" 1 todos-data)))))
