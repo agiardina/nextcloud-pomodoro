@@ -42,12 +42,11 @@
                      (define/augment (on-close)
                        (send timer-check-active stop)))
                    [label "Nextcloud Pomodoro"]
-                   [width 1200]                   
+                   [width 800]                   
                    [stretchable-width #t]))
 
 (define h-panel (new horizontal-panel% [parent frame]))
 (define left-panel (new vertical-panel%
-;                        [label "Task"]
                         [min-width 350]
                         [spacing 2]
                         [border 15]
@@ -56,23 +55,71 @@
                         [alignment '(center top)]
                         [parent h-panel]
                         ))
+
+(define source-choice  (new choice% [label #f] 
+                    [choices '("Deck" "Calendar")]
+                    [min-width 150]
+                    [stretchable-width #t]
+                    [style '(vertical-label)]
+                    [parent left-panel]
+                    [callback (lambda (choice _)
+                      (show-calendar-deck-panel 
+                        (send choice get-string-selection)))]))
+
+(define deck-panel (new vertical-panel%
+                        [alignment '(center top)]
+                        [parent left-panel]
+                        )) 
+
+(define calendar-panel (new vertical-panel%
+                        [alignment '(center top)]
+                        [parent left-panel]
+                        ))    
+;(send calendar-panel show #f)
+
+(define (show-hide-panel panel-to-show panel-to-hide)
+  (send left-panel change-children
+    (lambda (children) (remove panel-to-hide children)))
+  (send left-panel change-children
+    (lambda (children) (append children (list panel-to-show))))
+  (send frame reflow-container))  
+
+(define (show-calendar-panel)
+  (show-hide-panel calendar-panel deck-panel))
+
+(define (show-deck-panel)
+   (show-hide-panel deck-panel calendar-panel))
+
+(define (show-calendar-deck-panel source-selected)
+  (if (eq? source-selected "Calendar")
+    (show-calendar-panel)
+    (show-deck-panel)))
+
 (define right-panel (new vertical-panel% [parent h-panel]
                          [stretchable-width #f]
                          [min-width 230]))
+
 (define boards-choice (new choice% [label #f]
                     [choices '("Check Nextcloud Settings")]
                     [min-width 150]
                     [stretchable-width #t]
-   	 	    [parent left-panel]
+   	 	              [parent deck-panel]
                     [style '(vertical-label)]
                     [callback (lambda (c _)
                                 (populate-stacks-choice (send c get-selection)))]))
+
+(define calendars-choice (new choice% [label #f]
+                    [choices '("Check Calendar Nextcloud Settings")]
+                    [min-width 150]
+                    [stretchable-width #t]
+   	 	              [parent calendar-panel]
+                    [style '(vertical-label)]))                                
 
 (define stacks-choice (new choice% [label #f]
                     [choices '("")]
                     [min-width 150]
                     [stretchable-width #t]
-   	 	    [parent left-panel]
+   	 	              [parent deck-panel]
                     [style '(vertical-label)]
                     [callback (lambda (c _)
                                 (populate-cards-choice (send c get-selection)))]))
@@ -82,7 +129,20 @@
                    [min-width 150]
                    [stretchable-width #t]
                    [style '(vertical-label)]
-                   [parent left-panel]))
+                   [parent deck-panel]
+                   [callback (lambda (c _)
+                                (show-description (send c get-selection)))]))
+
+(define description-canvas (new editor-canvas%
+                           [parent deck-panel]
+                           [style '(auto-hscroll
+                                    auto-vscroll)]
+                           [label "Editor Canvas"]))
+
+(define description-editor (new text%))
+(send description-editor auto-wrap #t)
+(send description-editor insert "")
+(send description-canvas set-editor description-editor)
 
 ; Make a static text message in the frame
 (define msg (new message% [parent right-panel]
@@ -118,6 +178,15 @@
        (lambda (item) (send cards-choice append (str-max (hash-ref item 'title) max-choice-len)))
        (hash-ref stack 'cards)))))
 
+(define (show-description card-index)
+  (let* ([stack-index (- (send stacks-choice get-selection) 1)]
+         [stack (list-ref (current-stacks) stack-index)]
+         [cards (hash-ref stack 'cards)]
+         [card (list-ref cards (- card-index 1))]
+         [description (hash-ref card 'description)])
+    (send description-editor delete 0 (send description-editor last-position))
+    (send description-editor insert description)))
+
 (define (timer-start)
   (set! running? #t)
   (send timer-btn set-label "STOP")
@@ -132,14 +201,15 @@
                                 [label "Alert!"]
                                 [width 1024]
                                 [height 768]
-                                [style '(float no-caption)]))
+                                ;[style '(float)]
+                                ))
 
 (define (center-window window)
   (define-values (screen-width screen-height) (get-display-size))
   (define frame-width (send window get-width))
   (define frame-height (send window get-height))
-  (define x (/ (- screen-width frame-width) 2))
-  (define y (/ (- screen-height frame-height) 2))
+  (define x (round (/ (- screen-width frame-width) 2)))
+  (define y (round (/ (- screen-height frame-height) 2)))
   (send window move x y))                            
 
 (define not-running-panel (new vertical-panel% [parent not-running-window]))
@@ -186,9 +256,9 @@
 (send timer-check-active start 60000) ;1 minute
 
  
-(define insert-btn (new button% [parent left-panel]
-                       [label "Insert now"]
-                       [callback (lambda (_ __) (save-pomodoro))])) 
+; (define insert-btn (new button% [parent deck-panel]
+;                        [label "Insert now"]
+;                        [callback (lambda (_ __) (save-pomodoro))])) 
 
 (define timer-btn (new button% [parent right-panel]
                        [label "START"]
@@ -226,6 +296,16 @@
                            (lambda (_ __)
                              (plot-yearly-stats))]))
 
+(send left-panel change-children
+  (lambda (children)
+    (remove deck-panel children)))
+
+(send left-panel change-children
+  (lambda (children)
+    (remove calendar-panel children)))
+
+(show-deck-panel)
 
 (populate-boards-choice)
+(center-window frame)
 (send frame show #t)
